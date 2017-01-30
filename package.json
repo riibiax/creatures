@@ -1,0 +1,28 @@
+{
+  "name": "characters",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "mocha --reporter list",
+    "start": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/riibiax/creatures.git"
+  },
+  "author": "Andrea Rovescalli",
+  "license": "MIT",
+  "devDependencies": {
+    "mocha": "^3.2.0",
+    "three": "^0.84.0"
+  },
+  "dependencies": {
+    "express": "^4.14.1",
+    "firebase": "^3.6.7",
+    "socket.io": "^1.7.2",
+    "three": "^0.84.0",
+    "three-orbitcontrols": "^1.1.2",
+    "twit": "^2.2.5"
+  }
+}

@@ -1,0 +1,375 @@
+<html>
+    <head>
+        <title>Characters</title>
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <meta charset="utf-8">
+        <style>
+            * {
+                box-sizing: border-box;
+                -moz-box-sizing: border-box;
+            }
+
+            body {
+                color: #000;
+                font-family:Monospace;
+                font-size:13px;
+
+                background-color: #fff;
+                margin: 0px;
+            }
+
+            #info {
+                position: absolute;
+                top: 0px; width: 100%;
+                padding: 5px;
+                text-align:center;
+            }
+
+            #content {
+                position: absolute;
+                top: 0px; width: 100%;
+                z-index: 1;
+                padding: 3em 0 0 0;
+            }
+
+            #submit {
+                position: fixed;
+                top: 0;
+                right: 0;
+            }
+
+            a {
+                color: #0080ff;
+            }
+
+            #c {
+                position: fixed;
+                left: 0px;
+                width: 100%;
+                height: 100%;
+            }
+
+            .list-item {
+                display: inline-block;
+                margin: 1em;
+                padding: 1em;
+                box-shadow: 1px 2px 4px 0px rgba(0,0,0,0.25);
+            }
+
+            .list-item .scene {
+                width: 200px;
+                height: 200px;
+            }
+
+            .list-item .description {
+                color: #888;
+                font-family: sans-serif;
+                font-size: large;
+                width: 200px;
+                margin-top: 0.5em;
+            }
+        </style>
+    </head>
+    <body>
+
+        <input type="submit" value="submit" onclick="return foo();" />
+        <canvas id="c"></canvas>
+
+        <div id="content">
+        </div>
+        <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+
+        <script src="src/js/three.min.js"></script>
+        <script src="src/js/Detector.min.js"></script>
+        <script src="src/js/OrbitControls.js"></script>
+        <script src="src/js/stats.min.js"></script>
+
+        <script id="template" type="notjs">
+            <div class="scene"></div>
+            <div class="description">Scene $</div>
+        </script>
+
+        <script>
+            if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+            var canvas;
+
+            var scenes = [], renderer;
+
+            var stats;
+
+            var geometries;
+
+            init();
+            animate();
+
+            function init() {
+
+                canvas = document.getElementById( "c" );
+
+                var template = document.getElementById( "template" ).text;
+                var content = document.getElementById( "content" );
+                
+                socket = io.connect('http://localhost:3000');
+                socket.on('broadcastData', refreshCreatures);
+                var submit = document.createElement( "INPUT" );
+                submit.setAttribute("id", "submit"); 
+                submit.setAttribute("type", "submit"); 
+                submit.setAttribute("onclick", "submitData();"); 
+                content.appendChild( submit );
+
+                for ( var i =  0; i < 30; i ++ ) {
+
+
+                    var scene = new THREE.Scene();
+
+                    // make a list item
+                    var element = document.createElement( "div" );
+                    element.className = "list-item";
+                    element.innerHTML = template.replace( '$', i + 1 );
+
+                    // Look up the element that represents the area
+                    // we want to render the scene
+                    scene.userData.element = element.querySelector( ".scene" );
+                    content.appendChild( element );
+
+                    var camera = new THREE.PerspectiveCamera( 50, 1, 1, 10 );
+                    camera.position.z = 2;
+                    scene.userData.camera = camera;
+
+                    var controls = new THREE.OrbitControls( scene.userData.camera, scene.userData.element );
+                    controls.minDistance = 2;
+                    controls.maxDistance = 5;
+                    controls.enablePan = false;
+                    controls.enableZoom = false;
+                    scene.userData.controls = controls;
+
+                    // add one random mesh to each scene
+                   // var geometry = getRandomGeometry();
+
+                    var geometry = creatingCreature();
+                    
+
+                    var material = new THREE.MeshStandardMaterial( {
+
+                        color: new THREE.Color().setHSL( Math.random(), 1, 0.75 ),
+                        roughness: 0.5,
+                        metalness: 0,
+                        shading: THREE.FlatShading
+
+                    } );
+
+                    scene.add( new THREE.Mesh( geometry, material ) );
+
+                    scene.add( new THREE.HemisphereLight( 0xaaaaaa, 0x444444 ) );
+
+                    var light = new THREE.DirectionalLight( 0xffffff, 0.5 );
+                    light.position.set( 1, 1, 1 );
+                    scene.add( light );
+
+                    scenes.push( scene );
+
+                }
+
+
+                renderer = new THREE.WebGLRenderer( { canvas: canvas, antialias: true } );
+                renderer.setClearColor( 0xffffff, 1 );
+                renderer.setPixelRatio( window.devicePixelRatio );
+
+                addStats();
+
+            }
+
+            function getRandom(min, max) {
+                return Math.floor(Math.random() * (max - min + 1)) + min;
+            }
+
+            function getRandomGeometry() {
+                resetGeometries();
+                var index = getRandom (0, geometries.length-1);
+                var res = geometries[ index | 0 ];
+                //better bounding box
+                res.computeBoundingBox();
+                //console.log(res.boundingBox);
+                index = getRandom (0, geometries.length-1);
+                resetGeometries();
+                var head = geometries[ index | 0 ];
+                head.computeBoundingBox();
+                //console.log(res.boundingBox.max.y);
+                //head.translate(0,res.boundingBox.max.y,0);
+                head.applyMatrix(new THREE.Matrix4().makeTranslation(0, res.boundingBox.max.y + head.boundingBox.max.y, 0));
+                res.merge( head );
+                resetGeometries();
+                index = getRandom (0, geometries.length-1);
+                var armLeft = geometries[ index | 0 ];
+                armLeft.computeBoundingBox();
+                var armRight = armLeft.clone();
+                armLeft.applyMatrix(new THREE.Matrix4().makeTranslation(-res.boundingBox.max.x-armLeft.boundingBox.max.x, 0, 0));
+                res.merge( armLeft );
+
+                armRight.applyMatrix(new THREE.Matrix4().makeTranslation(res.boundingBox.max.x+armRight.boundingBox.max.x, 0, 0));
+                res.merge( armRight );
+                return res;
+            }
+
+            function resetGeometries() {
+
+                geometries = [
+                    new THREE.BoxGeometry( 1, 1, 1 ),
+                    new THREE.SphereGeometry( 0.5, 12, 8 ),
+                    new THREE.DodecahedronGeometry( 0.5 ),
+                    new THREE.CylinderGeometry( 0.5, 0.5, 0.5, 12 )
+                ];
+            }
+
+
+            function creatingCreature() {
+                var offset = new THREE.Vector2();
+                var creatureGeometry = creatingNose(offset);
+                creatureGeometry.computeBoundingBox();
+                offset.x= creatureGeometry.boundingBox.max.x;
+                offset.y= creatureGeometry.boundingBox.max.y;
+                var earsGeometry = creatingEars(offset);
+                creatureGeometry.merge(earsGeometry);
+               // creatureGeometry.merge(creatingEyes());
+               
+                //creatureGeometry.merge(creatingMouth());
+                //creatureGeometry.computeVertexNormals();
+                return creatureGeometry;
+            }
+
+            function creatingNose(offset) {
+                //var rotation = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(0, 0, 1), Math.PI / 2.0);
+                var coneUpDown = new THREE.ConeGeometry( 0.5, 0.5, 3 );
+                coneUpDown.applyMatrix(new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(0, 0, 1), Math.PI));                
+                var coneDownUp = new THREE.ConeGeometry( 0.5, 0.5, 3 );
+                
+                var noseGeometries = [
+                    coneUpDown,
+                    coneDownUp,
+                    new THREE.BoxGeometry( 0.5, 0.5, 0.5 ),
+                    new THREE.SphereGeometry( 0.25, 12, 8 ),
+                    new THREE.CylinderGeometry( 0.25, 0.25, .75, 12 )
+                ];
+                var index = getRandom (0, noseGeometries.length-1);
+                return noseGeometries[ index | 0 ];
+            }
+
+            function creatingEars(offset) {
+                var rotatedCone = new THREE.ConeGeometry( 0.125, 0.5, 3 );
+                rotatedCone.applyMatrix(new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(0, 0, 1), Math.PI/2));
+                var rotatedConeUp =rotatedCone.applyMatrix(new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(1, 0, 0), Math.PI/4));
+                var rotatedConeDown =  rotatedCone.applyMatrix(new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(1, 0, 0), Math.PI/4)); 
+                var earsGeometries = [
+                    rotatedConeUp,
+                    rotatedConeDown,
+                   // new THREE.BoxGeometry( 0.25, 0.25, 0.25 ),
+                   // new THREE.BoxGeometry( 0.5, 0.25, 0.25 ),
+                   // new THREE.SphereGeometry( 0.175, 12, 8 ),
+                   // new THREE.CylinderGeometry( 0.25, 0.25, 0.25, 12 )
+                ];
+                var index = getRandom (0, earsGeometries.length-1);
+                var earsGeometry = earsGeometries[ index | 0 ];
+                earsGeometry.computeBoundingBox();
+                var earsGeometrySpecular = earsGeometry.clone();
+                earsGeometrySpecular.computeBoundingBox();
+
+                earsGeometry.applyMatrix(new THREE.Matrix4().makeTranslation(offset.x + earsGeometry.boundingBox.max.x, offset.y + earsGeometry.boundingBox.max.y, 0));
+                earsGeometrySpecular.applyMatrix(new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(0, 0, 1), Math.PI)); 
+                earsGeometrySpecular.applyMatrix(new THREE.Matrix4().makeTranslation(-offset.x - earsGeometrySpecular.boundingBox.max.x, offset.y +  earsGeometrySpecular.boundingBox.max.y, 0));
+                earsGeometry.merge(earsGeometrySpecular);
+                return earsGeometry;
+            }
+
+            function addStats() {
+                stats = new Stats();
+                document.getElementById( "content" ).appendChild( stats.dom );
+            }
+
+            function submitData() {
+                //todo sending all the data for my creatures
+                var sendingCreatures = 10;
+                console.log("Sending Data: " + sendingCreatures);
+                socket.emit("pushingData", sendingCreatures);
+                socket.emit("broadcastData", sendingCreatures);
+                socket.emit("tweetData", sendingCreatures);
+            }
+
+            function refreshCreatures(data) {
+                //todo refresh my creatures
+                console.log("Receiving Data: " + data);
+            }
+
+            function updateSize() {
+
+                var width = canvas.clientWidth;
+                var height = canvas.clientHeight;
+
+                if ( canvas.width !== width || canvas.height != height ) {
+
+                    renderer.setSize( width, height, false );
+
+                }
+
+            }
+
+            function animate() {
+                render();
+                stats.update();
+                requestAnimationFrame( animate );
+            }
+
+            function render() {
+
+                updateSize();
+
+                renderer.setClearColor( 0xffffff );
+                renderer.setScissorTest( false );
+                renderer.clear();
+
+                renderer.setClearColor( 0xe0e0e0 );
+                renderer.setScissorTest( true );
+
+                scenes.forEach( function( scene ) {
+
+                    // so something moves
+                    scene.children[0].rotation.y = Date.now() * 0.0002;
+
+                    // get the element that is a place holder for where we want to
+                    // draw the scene
+                    var element = scene.userData.element;
+
+                    // get its position relative to the page's viewport
+                    var rect = element.getBoundingClientRect();
+
+                    // check if it's offscreen. If so skip it
+                    if ( rect.bottom < 0 || rect.top  > renderer.domElement.clientHeight ||
+                         rect.right  < 0 || rect.left > renderer.domElement.clientWidth ) {
+
+                        return;  // it's off screen
+
+                    }
+
+                    // set the viewport
+                    var width  = rect.right - rect.left;
+                    var height = rect.bottom - rect.top;
+                    var left   = rect.left;
+                    var bottom = renderer.domElement.clientHeight - rect.bottom;
+
+                    renderer.setViewport( left, bottom, width, height );
+                    renderer.setScissor( left, bottom, width, height );
+
+                    var camera = scene.userData.camera;
+
+                    //camera.aspect = width / height; // not changing in this example
+                    //camera.updateProjectionMatrix();
+
+                    //scene.userData.controls.update();
+
+                    renderer.render( scene, camera );
+
+                } );
+            }
+        </script>
+    </body>
+</html>
