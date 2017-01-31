@@ -2,6 +2,9 @@ var express = require('express');
 var socket = require('socket.io');
 var firebase = require('firebase');
 var Twit = require('twit');
+var exec = require('child_process').exec;
+var fs = require('fs');
+
 var config= require('./config');
 
 
@@ -23,6 +26,7 @@ function newConnection(socket) {
 	socket.on("pushingData", pushingData);
 	socket.on("broadcastData", broadcastData);
 	socket.on("tweetData", tweetData);
+	socket.on("render-frame", renderFrame);
 
 	function pushingData(data) {
 
@@ -66,6 +70,48 @@ function newConnection(socket) {
 
 		T.post('statuses/update', tweet, postTweet);
 	}
+
+	function renderFrame(data) {
+		data.file = data.file.split(',')[1]; // Get rid of the data:image/png;base64 at the beginning of the file data
+        var buffer = new Buffer(data.file, 'base64');
+        fs.writeFileSync(__dirname + '/tmp/frame-' + data.frame + '.png', buffer.toString('binary'), 'binary');
+        console.log(data.frame);
+        if(data.frame==90){
+			createVideo();
+        }
+	}
+
+	function createVideo() {
+		console.log("Creating a video");
+		var filePath = 'output.mp4';
+		fs.stat(filePath, function(err, stat) {
+			if(err == null) {
+			    console.log('Output file exists. Deleting it');
+			    fs.unlinkSync(filePath);
+			}
+		});
+		var cmd = '/usr/local/bin/ffmpeg -r 30 -i ./tmp/frame-%01d.png -vcodec libx264 -acodec aac -vf "scale=1280:trunc(ow/a/2)*2" -strict experimental -vb 1024k -minrate 1024k -maxrate 1024k -bufsize 1024k -ar 44100 -pix_fmt yuv420p -threads 0 ' + filePath;
+		exec(cmd, creatingVideo);
+
+		function creatingVideo() {
+			console.log("The video is ready");
+			rmDir('./tmp');	
+		}
+	}
+}
+
+function rmDir(dirPath) {
+  try { var files = fs.readdirSync(dirPath); }
+  catch(e) { return; }
+  if (files.length > 0)
+    for (var i = 0; i < files.length; i++) {
+      var filePath = dirPath + '/' + files[i];
+      if (fs.statSync(filePath).isFile())
+        fs.unlinkSync(filePath);
+      else
+        rmDir(filePath);
+    }
+  //fs.rmdirSync(dirPath);
 }
 
 function timenow(){
@@ -89,7 +135,24 @@ var T = new Twit(config.twitter);
 setInterval(postingArtwork, 1000*60*60);
 
 function postingArtwork(){
-
+	var filePath = "output.mp4";
+	fs.stat(filePath, function(err, stat) {
+		if(err == null) {
+			console.log("Posting a video");
+		    T.postMediaChunked({ file_path: filePath}, function (err, data, response) {
+				if(!err){
+					var mediaIdStr = data.media_id_string;
+  					var params = { status: ' ', media_ids: [mediaIdStr] };
+  					T.post('statuses/update', params, postTweet);
+  					fs.unlinkSync(filePath);
+				}
+				else{
+					console.log("Error");
+					console.log(err);
+				}
+			});
+		}
+	});
 }
 
 function postTweet(err, data, response) {
@@ -97,7 +160,7 @@ function postTweet(err, data, response) {
 		console.log(err);
 	}
 	else {
-		console.log("Posting a tweet");
+		console.log("A twit posted");
 	}
 }
 

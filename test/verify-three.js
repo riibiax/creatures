@@ -1,7 +1,9 @@
 var THREE = require('three');
 var assert = require("assert");
-var OrbitControls = require('three-orbitcontrols')
-var stats = require("stats-js")
+var OrbitControls = require('three-orbitcontrols');
+var stats = require("stats-js");
+var socket = require("socket.io");
+//var ccapture = require("ccapture.js");
 
 describe('The THREE object', function() {
   it('should have a defined BasicShadowMap constant', function() {

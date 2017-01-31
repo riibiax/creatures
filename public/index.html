@@ -91,6 +91,8 @@
 
         <script>
             if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+            var frameLimit=90;
+            var currentFrame=0;
 
             var canvas;
 
@@ -99,6 +101,7 @@
             var stats;
 
             var geometries;
+
 
             init();
             animate();
@@ -118,7 +121,7 @@
                 submit.setAttribute("onclick", "submitData();"); 
                 content.appendChild( submit );
 
-                for ( var i =  0; i < 30; i ++ ) {
+                for ( var i =  0; i < 10; i ++ ) {
 
 
                     var scene = new THREE.Scene();
@@ -289,15 +292,25 @@
             function submitData() {
                 //todo sending all the data for my creatures
                 var sendingCreatures = 10;
+
+                currentFrame=1;
+
                 console.log("Sending Data: " + sendingCreatures);
-                socket.emit("pushingData", sendingCreatures);
-                socket.emit("broadcastData", sendingCreatures);
-                socket.emit("tweetData", sendingCreatures);
+                //socket.emit("pushingData", sendingCreatures);
+                //socket.emit("broadcastData", sendingCreatures);
+                //socket.emit("tweetData", sendingCreatures);
             }
 
             function refreshCreatures(data) {
                 //todo refresh my creatures
                 console.log("Receiving Data: " + data);
+            }
+
+            function sendFrame() {
+                socket.emit('render-frame', {
+                        frame: currentFrame,
+                        file: document.querySelector('canvas').toDataURL()
+                });
             }
 
             function updateSize() {
@@ -333,7 +346,7 @@
                 scenes.forEach( function( scene ) {
 
                     // so something moves
-                    scene.children[0].rotation.y = Date.now() * 0.0002;
+                    scene.children[0].rotation.y = Date.now() * 0.001;
 
                     // get the element that is a place holder for where we want to
                     // draw the scene
@@ -368,7 +381,13 @@
 
                     renderer.render( scene, camera );
 
+
                 } );
+
+                if( currentFrame>=1 && currentFrame<=frameLimit ) {
+                    sendFrame();
+                    currentFrame++;
+                }
             }
         </script>
     </body>
