@@ -4,9 +4,7 @@ var firebase = require('firebase');
 var Twit = require('twit');
 var exec = require('child_process').exec;
 var fs = require('fs');
-
 var config= require('./config');
-
 
 //FIREBASE
 firebase.initializeApp(config.firebase);
@@ -64,11 +62,7 @@ function newConnection(socket) {
 	}
 
 	function tweetData(data) {
-		var tweet = { 
-			status: data
-		};
-
-		T.post('statuses/update', tweet, postTweet);
+		tweetIt(data);
 	}
 
 	function renderFrame(data) {
@@ -95,6 +89,7 @@ function newConnection(socket) {
 
 		function creatingVideo() {
 			console.log("The video is ready");
+			//removing all temp images
 			rmDir('./tmp');	
 		}
 	}
@@ -164,21 +159,38 @@ function postTweet(err, data, response) {
 	}
 }
 
+function tweetIt(txt){
+	console.log(txt);
+	var tweet = { 
+			status: txt
+	};
+	T.post('statuses/update', tweet, postTweet);
+}
+
 function followed(event) {
 	console.log("Follow event");
 	var name = event.source.name;
 	var screenName = event.source.screen_name;
-	var tweet = { 
-			status: '.@' + screenName + " do you like Swiss Mountains?"
-	};
-	T.post('statuses/update', tweet, postTweet);
+	var text = '.@' + screenName + " do you like Swiss Mountains?";
+	tweetIt(text);
+}
+
+function tweetEvent(eventMsg) {
+	console.log("Tweet event");
+	var replyTo = eventMsg.in_reply_to_screen_name;
+	var text = eventMsg.text;
+	var from = eventMsg.user.screen_name;
+	if (replyto === 'mountains_swiss') {
+		var newTweet = '.@' + from + ' thank you for tweeting me!';
+		tweetIt(newTweet);
+	}
 }
 
 var stream = T.stream('user');
 
 stream.on('follow', followed);
 
-
+stream.on('tweet', tweetEvent);
 
 
 console.log("my socket server is running");
