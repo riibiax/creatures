@@ -14,6 +14,12 @@ var database = firebase.database();
 var app = express();
 var server = app.listen(3000);
 app.use(express.static('public'));
+app.get('/data/:search', sendDataBack);
+
+function sendDataBack (request, response) {
+	var data = request.params;
+	response.send("you will get back some " + data.search + " soon");
+}
 
 //SOCKET
 var io = socket(server);
@@ -26,19 +32,33 @@ twitterNode.setup()
 
 function newConnection(socket) {
 	console.log('new conncetion: ' + socket.id);
+	socket.on("initializeClient", initializeClient);
 	socket.on("pushingData", pushingData);
 	socket.on("broadcastData", broadcastData);
-	socket.on("tweetData", twitterNode.tweetIt);
+	//socket.on("tweetData", twitterNode.tweetIt);
 	socket.on("render-frame", renderFrame);
 
-	function pushingData(data) {
+	function initializeClient(data) {
+		var ref = database.ref('locations');
+		ref.once('value').then(function(snapshot) {
+ 			var valuesDB = snapshot.val();
+ 			var keys = Object.keys(valuesDB);
+  			console.log("Initializing..");
+			console.log("Number of instances: " + keys.length);
+			socket.emit('initializeClient', keys.length);
+		});
+	}
 
+	function pushingData(data) {
+		var timeNow = utils.timenow();
 		var entry = {
 			connectionId: socket.id,
-			time: utils.timenow,
-			creatures: data
-		}
-		var ref = database.ref('creatures');
+			time: timeNow,
+			latitude: data.latitude,
+			longitude: data.longitude,
+			altitude: data.altitude
+		};
+		var ref = database.ref('locations');
 		ref.push(entry);
 		ref.on('value', gotData, errData);
 		console.log("Pushing Data to Firebase");
@@ -47,17 +67,14 @@ function newConnection(socket) {
 			var keys = Object.keys(valuesDB);
 			for (var i = 0; i <keys.length; i++) {
 				var k = keys[i];
-				var timeDB = valuesDB[k].time;
-				var creaturesDB = valuesDB[k].creatures;
-				console.log(timeDB, creaturesDB);
+				console.log(valuesDB[k]);
 			}
 		}
+
 		function errData(err) {
 			console.log("Error pushing data to firebase server");
 			console.log(err);
 		}
-
-		//console.log(entry);
 	}
 
 	function broadcastData(data) {
