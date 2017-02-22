@@ -1,0 +1,91 @@
+<html>
+    <head>
+        <title>Characters</title>
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <meta charset="utf-8">
+        <link type="text/css" rel="stylesheet" href="css/style.css">
+    </head>
+    <body>
+
+        
+        <canvas id="c"></canvas>
+
+        <div id="content">
+        </div>
+
+        <script id="vertexRawShader" type="x-shader/x-vertex">
+            precision mediump float;
+            precision mediump int;
+            uniform mat4 modelViewMatrix; // optional
+            uniform mat4 projectionMatrix; // optional
+            attribute vec3 position;
+            attribute vec4 color;
+            varying vec3 vPosition;
+            varying vec4 vColor;
+            void main() {
+                vPosition = position;
+                vColor = color;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+            }
+        </script>
+
+        <script id="fragmentRawShader" type="x-shader/x-fragment">
+            precision mediump float;
+            precision mediump int;
+            uniform float time;
+            varying vec3 vPosition;
+            varying vec4 vColor;
+            void main() {
+                vec4 color = vec4( vColor );
+                color.r += sin( vPosition.x * 10.0 + time ) * 0.5;
+                gl_FragColor = color;
+            }
+        </script>
+        
+        <script type="x-shader/x-vertex" id="vertexParticleShader">
+            uniform float amplitude;
+            uniform float time;
+            uniform float noiseFactor;
+            attribute float size;
+            attribute vec3 customPosition;
+
+            void main() {
+                vec3 vPosition = position;
+                // small noise  movement==> è il formicolio che si vede nel disegno==> meno noise è + chiaro è il disegn
+                vPosition.x += cos(time + (position.y/8.0))*noiseFactor; 
+                vPosition.z += sin(time + (position.x/8.0))*noiseFactor; 
+                vPosition.y += sin(time + (position.z/4.0))*noiseFactor;
+
+                // morph
+                vec3 morphed = vec3( 0.0, 0.0, 0.0 );
+                morphed += ( customPosition - position ) * amplitude;
+                morphed += vPosition;
+
+                vec4 mvPosition = modelViewMatrix * vec4( morphed, 1.0 );
+
+                //grandezza delle particelle
+                gl_PointSize = min(50.0, size * ( 50.0 / length( mvPosition.xyz ) ) );
+
+                gl_Position = projectionMatrix * mvPosition;
+            }
+        </script>
+
+        <script type="x-shader/x-fragment" id="fragmentParticleShader">
+            uniform sampler2D texture;
+            void main() {
+
+                vec4 outColor = texture2D( texture, gl_PointCoord );
+                if ( outColor.a < 0.5 ) discard; // alpha be gone, più è basso è meno si vede l'alpha ma diventa però giallo. più è alto e più si vede l'alpha==> moche
+                gl_FragColor = outColor;
+            }
+        </script>
+
+
+        <script id="template" type="notjs">
+            <div class="scene"></div>
+            <div class="description">Creature $</div>
+        </script>
+
+        <script src="js/scripts.min.js"></script>
+    </body>
+</html>

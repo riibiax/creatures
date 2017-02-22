@@ -13,7 +13,7 @@ var database = firebase.database();
 //SERVER EXPRESS
 var app = express();
 var server = app.listen(3000);
-app.use(express.static('public'));
+app.use(express.static('dist'));
 app.get('/data/:search', sendDataBack);
 
 function sendDataBack (request, response) {
