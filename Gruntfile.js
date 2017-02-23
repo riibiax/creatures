@@ -69,7 +69,6 @@ module.exports = function(grunt) {
                   'src/js/simplexnoise.js',
                   'src/js/stats.min.js',
                   'src/js/SuperShaders.js',
-                  'https://cdn.socket.io/socket.io-1.4.5.js',
                   'src/js/index.js',
                   'src/js/OrbitControls.js',
                   'src/js/ribbon.js',

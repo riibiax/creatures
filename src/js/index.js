@@ -20,7 +20,8 @@ var baseSize;
 var visualisation = {
     standardMaterial :  false,
     rawShader: false,
-    particlesMaterial: true
+    particlesMaterial: true,
+    ribbonMode: false
 } 
 
 
@@ -43,15 +44,19 @@ function init() {
     canvas = document.getElementById( "c" );                
     content = document.getElementById( "content" );
     
+    createSubmit();
+    
     socketInit();
 
+    addStats();
+}
+
+function createSubmit() {
     var submit = document.createElement( "INPUT" );
     submit.setAttribute("id", "submit"); 
     submit.setAttribute("type", "submit"); 
     submit.setAttribute("onclick", "sendLocation();"); 
     content.appendChild( submit );
-
-    addStats();
 }
 
 function initSketch(numberInstances) {
@@ -183,22 +188,25 @@ function initSketch(numberInstances) {
         creatureMesh.name = "creature";
         scene.add( creatureMesh );
         scene.add( new THREE.HemisphereLight( 0xaaaaaa, 0x444444 ) );
-        //todo add boolean
-        if(false){
+
+        if(visualisation.ribbonMode){
             worldHolder = new THREE.Object3D();
 
-    
             scene.add(worldHolder);
 
             creatureMesh.geometry.computeBoundingBox();
             //CREATE EMITTERS
             for (var i = 0; i < EMITTER_COUNT; i++) {
-                emitters[i] = ATUtil.randomVector3(creatureMesh.geometry.boundingBox.max.y);
+                //todo
+                //creatureMesh.geometry.boundingBox.max.y
+                emitters[i] = ATUtil.randomVector3(500);
             }
 
             //CREATE RIBBONS
             for (i = 0; i < RIBBON_COUNT; i++) {
-                var r = new Ribbon(creatureMesh.geometry.boundingBox.max.y,EMITTER_COUNT);
+                //todo
+                //creatureMesh.geometry.boundingBox.max.y
+                var r = new Ribbon(500,EMITTER_COUNT);
                 r.init();
                 worldHolder.add(r.mesh);
                 ribbons.push(r);
@@ -545,7 +553,7 @@ function creatingMouth(offset) {
 
 function addStats() {
     stats = new Stats();
-    document.getElementById( "content" ).appendChild( stats.dom );
+    content.appendChild( stats.dom );
 }
 
 
@@ -634,17 +642,20 @@ function updateSize() {
 
 
 function animateRibbons() {
-    noiseTime += 0.001;
-    if(false){
-        for (var i = 0; i < RIBBON_COUNT; i++) {
+    if (visualisation.ribbonMode) 
+    {
+        noiseTime += 0.001;
+        var i;
+        for (i = 0; i < RIBBON_COUNT; i++) 
+        {
             ribbons[i].update();
         }
-        if(worldHolder){
+        if (worldHolder)
+        {
             worldHolder.rotation.y += 0.001;
             worldHolder.rotation.x += 0.001;
         }
     }
-
 }
 
 function animate() {
@@ -712,7 +723,7 @@ function render() {
 
     } );
 
-    if( currentFrame>=1 && currentFrame<=frameLimit ) {
+    if( currentFrame >= 1 && currentFrame <= frameLimit ) {
         sendFrame();
         currentFrame++;
     }
