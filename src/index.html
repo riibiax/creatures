@@ -46,7 +46,6 @@
             uniform float amplitude;
             uniform float time;
             uniform float noiseFactor;
-            attribute float size;
             attribute vec3 customPosition;
 
             void main() {
@@ -64,7 +63,7 @@
                 vec4 mvPosition = modelViewMatrix * vec4( morphed, 1.0 );
 
                 //grandezza delle particelle
-                gl_PointSize = min(50.0, size * ( 50.0 / length( mvPosition.xyz ) ) );
+                gl_PointSize = 150.0 / length( mvPosition.xyz );
 
                 gl_Position = projectionMatrix * mvPosition;
             }
