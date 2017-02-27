@@ -6,7 +6,6 @@ var Creature = function(posX, posY, posZ, scale, particlesMaterial, trianglesMat
 	this.position.z =  posZ || 0;
 
 	this.meshes = [];
-	this.state = 0;
 
 	var meshGeom = createMeshGeom();
 
@@ -14,22 +13,6 @@ var Creature = function(posX, posY, posZ, scale, particlesMaterial, trianglesMat
     startParticlesAnimation(this.meshes[0]);
 
 	this.meshes.push( createTrianglesMesh(meshGeom.geometry, meshGeom.indexes) );
-
-	this.update = function(time) {
-    	this.meshes[this.state].rotation.y = time * 0.0005;
-    	this.meshes[this.state].material.uniforms.time.value = time * 0.005;
-	};
-
-	this.switchState = function() {
-	   	if (this.state == 0) {
-    		this.state = 1;
-    		stopParticlesAnimation();	
-    	}
-    	else {
-    		this.state = 0;
-    		startParticlesAnimation(this.meshes[this.state]);
-    	}
-	};
 
 	function createParticlesMesh(particlesGeometry) {
 		var bufferGeometry = new THREE.BufferGeometry()
@@ -355,5 +338,22 @@ var Creature = function(posX, posY, posZ, scale, particlesMaterial, trianglesMat
 	    }
 	    return mouthGeometry;
 	}
-
 };
+
+Creature.prototype.update = function(time) {
+	this.meshes[this.state].rotation.y = time * 0.0005;
+	this.meshes[this.state].material.uniforms.time.value = time * 0.005;
+};
+
+Creature.prototype.switchState = function() {
+   	if (this.state == 0) {
+		this.state = 1;
+		stopParticlesAnimation();	
+	}
+	else {
+		this.state = 0;
+		startParticlesAnimation(this.meshes[this.state]);
+	}
+};
+
+Creature.prototype.state = 0;

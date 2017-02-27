@@ -120,6 +120,7 @@ function initSketch(numberInstances) {
 
         creatures.push(creatureObj);
         creatureObj.state = 1;
+        console.log(creatureObj);
         scene.add( creatureObj.meshes[creatureObj.state]);
 
         scene.add( new THREE.HemisphereLight( 0xaaaaaa, 0x444444 ) );
