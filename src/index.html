@@ -45,23 +45,17 @@
         <script type="x-shader/x-vertex" id="vertexParticleShader">
             uniform float amplitude;
             uniform float time;
-            uniform float noiseFactor;
+            uniform float scale;
             attribute vec3 customPosition;
 
             void main() {
-                vec3 vPosition = position;
-                // small noise  movement==> è il formicolio che si vede nel disegno==> meno noise è + chiaro è il disegn
-                vPosition.x += cos(time + (position.y/8.0))*noiseFactor; 
-                vPosition.z += sin(time + (position.x/8.0))*noiseFactor; 
-                vPosition.y += sin(time + (position.z/4.0))*noiseFactor;
-
                 // morph
                 vec3 morphed = vec3( 0.0, 0.0, 0.0 );
                 morphed += ( customPosition - position ) * amplitude;
-                morphed += vPosition;
+                morphed += position;
 
                 vec4 mvPosition = modelViewMatrix * vec4( morphed, 1.0 );
-                gl_PointSize = 150.0 / length( mvPosition.xyz );
+                gl_PointSize = scale * (120.0 / length( mvPosition.xyz ));
                 gl_Position = projectionMatrix * mvPosition;
             }
         </script>

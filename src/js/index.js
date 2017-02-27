@@ -77,7 +77,7 @@ function initSketch(numberInstances) {
         amplitude: { type: "f", value: 1.0 },
         texture:   { type: "t", value: textures.map },
         time:      { type: "f", value: 0.1 },
-        noiseFactor: { type: "f", value: 0.1 } ,
+        scale:     { type: "f", value: 1.0 }
     };
 
     var particleShaderMaterial = new THREE.ShaderMaterial( {
@@ -119,9 +119,9 @@ function initSketch(numberInstances) {
         var creatureObj = new Creature(0, 0, 0, 10, particleShaderMaterial, rawShaderMaterial);
 
         creatures.push(creatureObj);
-        creatureObj.state = 1;
-        console.log(creatureObj);
-        scene.add( creatureObj.meshes[creatureObj.state]);
+        //creatureObj.switchState();
+        //console.log(creatureObj);
+        scene.add( creatureObj.meshes(creatureObj.state()));
 
         scene.add( new THREE.HemisphereLight( 0xaaaaaa, 0x444444 ) );
 
