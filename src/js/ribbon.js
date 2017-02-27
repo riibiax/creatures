@@ -15,11 +15,11 @@ var Ribbon = function(bounds, emitter_count){
 
 	this.init = function(){
 
-		this.LEN = 40; //number of spine points
+		this.LEN = 100; //number of spine points
 
 		this.velocity = new THREE.Vector3();
-		this.speed = ATUtil.randomRange(5,20);
-		this.ribbonWidth = ATUtil.randomRange(2,12);
+		this.speed = ATUtil.randomRange(0.5,2.0);
+		this.ribbonWidth = ATUtil.randomRange(0.2,1.2);
 		this.col = new THREE.Color();
 		this.up = new THREE.Vector3(0,1,0);
 
@@ -27,12 +27,12 @@ var Ribbon = function(bounds, emitter_count){
             this.tangent = new THREE.Vector3();
             this.normal = new THREE.Vector3();
 
-		this.noiseScale = 1200;// 100, 5000).name('Turbulence');
-		this.noiseSpeed =  0.001;//', 0, 0.01).name('Variance');
-		this.noiseSeparation = 0.1; //', 0, 0.5).name('Cohesion');
-		this.ribbonSpeed = 1; //', 0.1, 5).name('Speed');
+		this.noiseScale = 120;// 100, 5000).name('Turbulence');
+		this.noiseSpeed =  0.0001;//', 0, 0.01).name('Variance');
+		this.noiseSeparation = 0.01; //', 0, 0.5).name('Cohesion');
+		this.ribbonSpeed = 0.1; //', 0.1, 5).name('Speed');
 
-		this.startRange = 100;
+		this.startRange = 10;
 		this.clumpiness = 0.8;
 
 		//head is the thing that moves, tail follows behind
@@ -127,8 +127,8 @@ var Ribbon = function(bounds, emitter_count){
 		this.vec.copy(this.head).divideScalar(this.noiseScale);
 
 		this.velocity.x = noise.noise4d(this.vec.x, this.vec.y, this.vec.z, 0  + noiseTime + this.id ) * this.speed * this.ribbonSpeed;
-		this.velocity.y = noise.noise4d(this.vec.x, this.vec.y, this.vec.z, 50 + noiseTime + this.id ) * this.speed * this.ribbonSpeed;
-		this.velocity.z = noise.noise4d(this.vec.x, this.vec.y, this.vec.z, 100+ noiseTime + this.id ) * this.speed * this.ribbonSpeed;
+		this.velocity.y = noise.noise4d(this.vec.x, this.vec.y, this.vec.z, 5 + noiseTime + this.id ) * this.speed * this.ribbonSpeed;
+		this.velocity.z = noise.noise4d(this.vec.x, this.vec.y, this.vec.z, 10+ noiseTime + this.id ) * this.speed * this.ribbonSpeed;
 
 		this.head.add(this.velocity);
 

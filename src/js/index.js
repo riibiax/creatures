@@ -5,8 +5,8 @@ var socket;
 
 if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
-var frameLimit=90;
-var currentFrame=0;
+var frameLimit = 90;
+var currentFrame = 0;
 
 var canvas, content;
 
@@ -25,14 +25,14 @@ var visualisation = {
 
 var creatures = [];
 
-var RIBBON_COUNT = 600;
+var RIBBON_COUNT = 10;
 var ribbons = [];
 
-var EMITTER_COUNT = 10;
+var EMITTER_COUNT = 3;
 var emitters = [];
 
 var noise = new SimplexNoise();
-var noiseTime = Math.random()*1000;
+var noiseTime = Math.random() * 1000;
 
 var worldHolder;
 
@@ -103,51 +103,50 @@ function initSketch(numberInstances) {
         scene.userData.element = element.querySelector( ".scene" );
         content.appendChild( element );
 
-        var camera = new THREE.PerspectiveCamera( 50, 1, 1, 20 );
-        camera.position.z = 10;
+        var camera = new THREE.PerspectiveCamera( 50, 1, 1, 200 );
+        camera.position.z = 100;
         scene.userData.camera = camera;
 
         var controls = new THREE.OrbitControls( scene.userData.camera, scene.userData.element );
         controls.minDistance = 1;
-        controls.maxDistance = 15;
+        controls.maxDistance = 150;
         controls.enablePan = false;
         controls.enableZoom = true;
         scene.userData.controls = controls;
 
         // add one random mesh to each scene
 
-        var creatureObj = new Creature(0, 0, 0, 0, rawShaderMaterial, particleShaderMaterial);
-        creatureObj.init();
+        var creatureObj = new Creature(0, 0, 0, 10, particleShaderMaterial, rawShaderMaterial);
+
         creatures.push(creatureObj);
-
-
+        creatureObj.state = 1;
         scene.add( creatureObj.meshes[creatureObj.state]);
 
         scene.add( new THREE.HemisphereLight( 0xaaaaaa, 0x444444 ) );
 
-        /*if(visualisation.ribbonMode){
+        if(visualisation.ribbonMode){
             worldHolder = new THREE.Object3D();
 
             scene.add(worldHolder);
 
-            creatureMesh.geometry.computeBoundingBox();
+            //creatureMesh.geometry.computeBoundingBox();
             //CREATE EMITTERS
             for (var i = 0; i < EMITTER_COUNT; i++) {
                 //todo
                 //creatureMesh.geometry.boundingBox.max.y
-                emitters[i] = ATUtil.randomVector3(500);
+                emitters[i] = ATUtil.randomVector3(50);
             }
 
             //CREATE RIBBONS
             for (i = 0; i < RIBBON_COUNT; i++) {
                 //todo
                 //creatureMesh.geometry.boundingBox.max.y
-                var r = new Ribbon(500,EMITTER_COUNT);
+                var r = new Ribbon(50,EMITTER_COUNT);
                 r.init();
                 worldHolder.add(r.mesh);
                 ribbons.push(r);
             }
-        }*/
+        }
 
 
 

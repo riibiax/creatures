@@ -1,25 +1,19 @@
-var Creature = function(posX, posY, posZ, scale, material1, material2){
+var Creature = function(posX, posY, posZ, scale, particlesMaterial, trianglesMaterial){
 
-	this.init = function(){
+	this.position = new THREE.Vector3();
+	this.position.x =  posX || 0;
+	this.position.y =  posY || 0;
+	this.position.z =  posZ || 0;
 
-		this.position = new THREE.Vector3();
-		this.position.x =  posX || 0;
-		this.position.y =  posY || 0;
-		this.position.z =  posZ || 0;
+	this.meshes = [];
+	this.state = 0;
 
-		this.meshes = [];
-		this.state = 0;
-		this.atween;
-		this.btween;
+	var meshGeom = createMeshGeom();
 
-		var meshGeom = createMeshGeom();
+    this.meshes.push( createParticlesMesh(meshGeom.geometry) );
+    startParticlesAnimation(this.meshes[0]);
 
-        this.meshes.push( createParticlesMesh(meshGeom[0]) );
-        startParticlesAnimation(this.meshes[0]);
-
-		this.meshes.push( createTrianglesMesh(meshGeom[1]) );
-	};
-
+	this.meshes.push( createTrianglesMesh(meshGeom.geometry, meshGeom.indexes) );
 
 	this.update = function(time) {
     	this.meshes[this.state].rotation.y = time * 0.0005;
@@ -31,7 +25,7 @@ var Creature = function(posX, posY, posZ, scale, material1, material2){
     		this.state = 1;
     		stopParticlesAnimation();	
     	}
-    	else  {
+    	else {
     		this.state = 0;
     		startParticlesAnimation(this.meshes[this.state]);
     	}
@@ -58,74 +52,68 @@ var Creature = function(posX, posY, posZ, scale, material1, material2){
 
         bufferGeometry.addAttribute( 'position', new THREE.BufferAttribute( positions, 3));
         bufferGeometry.addAttribute( 'customPosition', new THREE.BufferAttribute( customPosition, 3).setDynamic(true));
-        var creatureParticleMesh = new THREE.Points( bufferGeometry, material2 );
+        var creatureParticleMesh = new THREE.Points( bufferGeometry, particlesMaterial );
         creatureParticleMesh.geometry.attributes.customPosition.needsUpdate = true;
         return creatureParticleMesh;
 	}
 
-	function createTrianglesMesh(trianglesArray) {
+	function createTrianglesMesh(trianglesGeometry, trianglesIndexes) {
 		var bufferGeometry = new THREE.BufferGeometry();
-		bufferGeometry.addAttribute( 'position', new THREE.BufferAttribute(trianglesArray, 3));
-        var bufferGeometrySize = Math.floor(trianglesArray.length / 3);
-        var colors = new Uint8Array( bufferGeometrySize * 4 );
-        var n, l;
-        for (n = 0, l = bufferGeometrySize * 4; n < l; n += 4) {
-            colors[ n     ] = Math.random() * 255;
-            colors[ n + 1 ] = Math.random() * 255;
-            colors[ n + 2 ] = Math.random() * 255;
-            colors[ n + 3 ] = Math.random() * 255;
-        }
-        bufferGeometry.addAttribute( 'color', new THREE.BufferAttribute(colors, 4, true));
-		var creatureRawMesh = new THREE.Mesh(bufferGeometry, material1);
-        return creatureRawMesh;
-	}
+		var verticesGeometry = trianglesGeometry.vertices;
+        var bufferGeometrySize = trianglesGeometry.vertices.length;
 
-	function startParticlesAnimation(particleMesh) {
-		if (!this.atween && !this.btween) {
-			this.atween = new TWEEN.Tween(particleMesh.material.uniforms.amplitude)
-	            .to({value: 0.0}, 3000)
-	            .delay(1000)
-	            .easing(TWEEN.Easing.Back.InOut);
-	        this.btween = new TWEEN.Tween(particleMesh.material.uniforms.amplitude)
-	            .to({value: 1.0}, 3000)
-	            .delay(1000)
-	            .easing(TWEEN.Easing.Back.InOut);
-	        this.atween.chain(this.btween);
-	        this.btween.chain(this.atween);
-		}
-        this.atween.start();
-	}
-
-	function stopParticlesAnimation() {
-		if (this.atween) {
-			this.atween.stop();
-		}
-	}
-
-	function getTrianglesVertices(geom) {
-        var verticesGeometry = geom.vertices;
-        var verticesGeometrySize = geom.vertices.length;
-        var vertices = new Float32Array(verticesGeometrySize * 3 * 3);
+		var vertices = new Float32Array(bufferGeometrySize * 3 * 3);
         var n, f;
+        var currentStep = 0;
         var randomIndex;
-        for (n = 0, f = 0; f < verticesGeometrySize; n += 3)
-        {
-            if(n % 9 == 0 )
-            {
+        for (n = 0, f = 0; f < bufferGeometrySize; n += 3) {
+            if(n % 9 == 0 ) {
                 vertices[ n     ] = verticesGeometry[ f ].x;
                 vertices[ n + 1 ] = verticesGeometry[ f ].y;
                 vertices[ n + 2 ] = verticesGeometry[ f ].z;
+                if(f >= trianglesIndexes[currentStep]) {
+            		currentStep++;
+            	}
                 f++;
             }
-            else
-            {
-                randomIndex = ATUtil.randomInt(0, verticesGeometrySize - 1);
+            else {
+                randomIndex = ATUtil.randomInt(trianglesIndexes [currentStep-1], trianglesIndexes [currentStep] - 1);
                 vertices[ n     ] = verticesGeometry[ randomIndex ].x * (Math.random() * .3 + 1);
                 vertices[ n + 1 ] = verticesGeometry[ randomIndex ].y * (Math.random() * .3 + 1);
                 vertices[ n + 2 ] = verticesGeometry[ randomIndex ].z * (Math.random() * .3 + 1);
             }
         }
-        return vertices;
+        var colors = new Uint8Array( bufferGeometrySize * 3 * 4);
+        for (n = 0; n < bufferGeometrySize * 3 * 4; n += 4) {
+            colors[ n     ] = Math.random() * 255;
+            colors[ n + 1 ] = Math.random() * 255;
+            colors[ n + 2 ] = Math.random() * 255;
+            colors[ n + 3 ] = Math.random() * 255;
+        }
+
+		bufferGeometry.addAttribute( 'position', new THREE.BufferAttribute(vertices, 3));
+        bufferGeometry.addAttribute( 'color', new THREE.BufferAttribute(colors, 4, true));
+		var creatureRawMesh = new THREE.Mesh(bufferGeometry, trianglesMaterial);
+        return creatureRawMesh;
+	}
+
+	function startParticlesAnimation(particleMesh) {
+		
+		var atween = new TWEEN.Tween(particleMesh.material.uniforms.amplitude)
+	            .to({value: 0.0}, 3000)
+	            .delay(1000)
+	            .easing(TWEEN.Easing.Back.InOut);
+	    var btween = new TWEEN.Tween(particleMesh.material.uniforms.amplitude)
+	            .to({value: 1.0}, 3000)
+	            .delay(1000)
+	            .easing(TWEEN.Easing.Back.InOut);
+	    atween.chain(btween);
+	    btween.chain(atween);
+        atween.start();
+	}
+
+	function stopParticlesAnimation() {
+		TWEEN.removeAll();
 	}
 
 	function createMeshGeom() {
@@ -133,12 +121,12 @@ var Creature = function(posX, posY, posZ, scale, material1, material2){
 		
 		var creatureGeometry = new THREE.Geometry();
 
-		var rawVerticesArray = [];
+		var creatureIndexes = [];
+		creatureIndexes.push(0);
 
-	    var noseGeometry = creatingNose(offset);
-
-	    creatureGeometry.merge(noseGeometry[0]);
-	   	rawVerticesArray = ATUtil.float32Concat(rawVerticesArray, noseGeometry[1]);
+	    var nose = creatingNose(offset);
+	    creatureGeometry.merge(nose);
+	    creatureIndexes.push(nose.vertices.length);
 
 	    creatureGeometry.computeBoundingBox();
 	    creatureGeometry.computeBoundingSphere();
@@ -146,26 +134,34 @@ var Creature = function(posX, posY, posZ, scale, material1, material2){
 	    offset.y = creatureGeometry.boundingBox.max.y * 1.5 - creatureGeometry.boundingSphere.center.y;
 	    var offsetYMouth = -creatureGeometry.boundingBox.max.y + creatureGeometry.boundingSphere.center.y*2.;
 
-	    var eyesGeometry = creatingEyes(offset);
-	    
-	    creatureGeometry.merge(eyesGeometry[0]);
-	    rawVerticesArray = ATUtil.float32Concat(rawVerticesArray, eyesGeometry[1]);
+	    var eyes = creatingEyes(offset);
+	    creatureGeometry.merge(eyes);
+	    var eyesGeometrySize = eyes.vertices.length*0.5;
+	    creatureIndexes.push(creatureIndexes[creatureIndexes.length-1]+eyesGeometrySize);
+	   	creatureIndexes.push(creatureIndexes[creatureIndexes.length-1]+eyesGeometrySize);
+
+
 	    creatureGeometry.computeBoundingBox();
 	    offset.x = creatureGeometry.boundingBox.max.x;
 	    offset.y = creatureGeometry.boundingBox.max.y;
 
-	    var earsGeometry = creatingEars(offset);
-	    creatureGeometry.merge(earsGeometry[0]);
-		rawVerticesArray = ATUtil.float32Concat(rawVerticesArray, earsGeometry[1]);
+	    var ears = creatingEars(offset);
+	    creatureGeometry.merge(ears);
+	    var earsGeometrySize = ears.vertices.length*0.5;
+	    creatureIndexes.push(creatureIndexes[creatureIndexes.length-1]+earsGeometrySize);
+	   	creatureIndexes.push(creatureIndexes[creatureIndexes.length-1]+earsGeometrySize);
 
 	    offset.y =  offsetYMouth;
-	    var mouthGeometry = creatingMouth(offset);
-	    creatureGeometry.merge(mouthGeometry[0]);
-	    rawVerticesArray = ATUtil.float32Concat(rawVerticesArray, mouthGeometry[1]);
+
+	    var mouth = creatingMouth(offset);
+	    creatureGeometry.merge(mouth);
+	    creatureIndexes.push(creatureIndexes[creatureIndexes.length-1]+mouth.vertices.length);
+
 	    //creatureGeometry.computeFaceNormals();
 	    //creatureGeometry.computeVertexNormals();
+	    creatureGeometry.scale(scale, scale, scale);
 		
-		return [creatureGeometry, rawVerticesArray];
+		return { geometry: creatureGeometry, indexes: creatureIndexes};
 	};
 
 	function creatingNose(offset) {
@@ -192,8 +188,7 @@ var Creature = function(posX, posY, posZ, scale, material1, material2){
 	    ];
 	    var index = ATUtil.randomInt(0, noseGeometries.length-1);
 	    var noseGeometry = noseGeometries [index | 0];
-	    var rawVertices = getTrianglesVertices(noseGeometry);
-	    return [noseGeometry, rawVertices];
+	    return noseGeometry;
 	}
 
 	function creatingEyes(offset) {
@@ -235,14 +230,10 @@ var Creature = function(posX, posY, posZ, scale, material1, material2){
 	    eyesGeometrySpecular.computeBoundingBox();
 
 	    eyesGeometry.applyMatrix(new THREE.Matrix4().makeTranslation(offset.x + eyesGeometry.boundingBox.max.x * .5, offset.y + eyesGeometry.boundingBox.max.y * 2., 0));
-
 	    eyesGeometrySpecular.applyMatrix(new THREE.Matrix4().makeTranslation(-offset.x - eyesGeometrySpecular.boundingBox.max.x * .5, offset.y +  eyesGeometrySpecular.boundingBox.max.y * 2., 0));
 
-	    var rawVertices = getTrianglesVertices(eyesGeometry);
-	    rawVertices = ATUtil.float32Concat(rawVertices, getTrianglesVertices(eyesGeometrySpecular));
-
 	    eyesGeometry.merge(eyesGeometrySpecular);
-	    return [eyesGeometry, rawVertices];
+	    return eyesGeometry;
 	}
 
 	function creatingEars(offset) {
@@ -296,11 +287,9 @@ var Creature = function(posX, posY, posZ, scale, material1, material2){
 	    else{
 	        earsGeometrySpecular.applyMatrix(new THREE.Matrix4().makeTranslation(-offset.x - earsGeometrySpecular.boundingBox.max.x*1.5, offset.y +earsGeometrySpecular.boundingBox.max.y, 0));
 	    }
-	    var rawVertices = getTrianglesVertices(earsGeometry);
-	    rawVertices = ATUtil.float32Concat(rawVertices, getTrianglesVertices(earsGeometrySpecular));
-
+	    
 	    earsGeometry.merge(earsGeometrySpecular);
-	    return [earsGeometry, rawVertices];
+	    return earsGeometry;
 	}
 
 	function creatingMouth(offset) {
@@ -364,9 +353,7 @@ var Creature = function(posX, posY, posZ, scale, material1, material2){
 	    else if(index == 7){
 	        mouthGeometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, offset.y - mouthGeometry.boundingBox.max.x * .75, 0));
 	    }
-
-	    var rawVertices = getTrianglesVertices(mouthGeometry);
-	    return [mouthGeometry, rawVertices];
+	    return mouthGeometry;
 	}
 
 };
