@@ -323,21 +323,36 @@ const stopParticlesAnimation = function() {
 	TWEEN.removeAll();
 }
 
-function Creature(posX, posY, posZ, scale, particlesMaterial, trianglesMaterial) {
-	this._position = new THREE.Vector3();
+function Creature(posX, posY, posZ, scale, particlesMaterial, trianglesMaterial, ribbonsCount) {
+	this._creatureHolder = new THREE.Object3D();
+    this._position = new THREE.Vector3();
 	this._position.x =  posX || 0;
 	this._position.y =  posY || 0;
 	this._position.z =  posZ || 0;
 
-	this._meshes = [];
 	this._state = 0;
+    this._ribbons = [];
 
 	var meshGeom = createMeshGeom.call(this, scale);
 
-	this._meshes.push( createParticlesMesh.call(this, meshGeom.geometry, particlesMaterial, scale) );
-	startParticlesAnimation.call(this, this._meshes[0]);
+	this._creatureHolder.add( createParticlesMesh.call(this, meshGeom.geometry, particlesMaterial, scale) );
+	startParticlesAnimation.call(this, this._creatureHolder.children[0]);
 
-	this._meshes.push( createTrianglesMesh.call(this, meshGeom.geometry, meshGeom.indexes, trianglesMaterial) );
+	this._creatureHolder.add( createTrianglesMesh.call(this, meshGeom.geometry, meshGeom.indexes, trianglesMaterial) );
+    this._creatureHolder.children[1].visible = false;
+    meshGeom.geometry.computeBoundingSphere();
+    var bounds = meshGeom.geometry.boundingSphere.radius;
+    var ribbon;
+    //todo
+    var meshMaterial = new THREE.MeshBasicMaterial( {
+        side: THREE.DoubleSide,
+        vertexColors: THREE.FaceColors
+    } );
+    for (i = 0; i < ribbonsCount; i++) {
+        ribbon = new Ribbon(bounds);
+        this._ribbons.push(ribbon);
+        this._creatureHolder.add(new THREE.Mesh( ribbon.meshGeom, meshMaterial ));
+    }
 }    
 
 Creature.prototype =  {
@@ -345,18 +360,26 @@ Creature.prototype =  {
 	constructor: Creature,
 
     update: function(time) {
-		this._meshes[this._state].rotation.y = time * 0.0005;
-		this._meshes[this._state].material.uniforms.time.value = time * 0.005;
+		this._creatureHolder.children[this._state].material.uniforms.time.value = time * 0.005;
+        var i;
+        for (i = 0; i < this._ribbons.length; i++) {
+            this._ribbons[i].update(time);
+        }
+        this._creatureHolder.rotation.y = time * 0.0005;
 	},
 
 	switchState: function() {
 	   	if (this._state == 0) {
 			this._state = 1;
+            this._creatureHolder.children[0].visible = false;
+            this._creatureHolder.children[1].visible = true;
 			stopParticlesAnimation.call(this);	
 		}
 		else {
 			this._state = 0;
-			startParticlesAnimation.call(this, this._meshes[this._state]);
+            this._creatureHolder.children[0].visible = true;
+            this._creatureHolder.children[1].visible = false;
+			startParticlesAnimation.call(this, this._creatureHolder.children[this._state]);
 		}
 	},
 
@@ -364,7 +387,7 @@ Creature.prototype =  {
         return this._state;
     },
 
-    meshes: function(meshState) {
-        return this._meshes[meshState];
+    creatureHolder: function() {
+        return this._creatureHolder;
     }
 };

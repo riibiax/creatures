@@ -72,7 +72,7 @@ module.exports = function(grunt) {
                   'src/js/index.js',
                   'src/js/OrbitControls.js',
                   'src/js/ribbon.js',
-                  'src/js/creature.js',
+                  'src/js/creature.js'
               ]
           }
       }

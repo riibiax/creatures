@@ -16,25 +16,9 @@ var stats;
 
 var textures = {};
 var baseSize;
-var visualisation = {
-    standardMaterial :  false,
-    rawShader: false,
-    particlesMaterial: true,
-    ribbonMode: false
-} 
 
 var creatures = [];
-
-var RIBBON_COUNT = 10;
-var ribbons = [];
-
-var EMITTER_COUNT = 3;
-var emitters = [];
-
 var noise = new SimplexNoise();
-var noiseTime = Math.random() * 1000;
-
-var worldHolder;
 
 
 createTextures();
@@ -89,7 +73,7 @@ function initSketch(numberInstances) {
         transparent:    true
     });
     
-    for (i =  0; i < numberInstances; i ++) {
+    for (i =  0; i < 1; i ++) {
 
         var scene = new THREE.Scene();
 
@@ -103,52 +87,25 @@ function initSketch(numberInstances) {
         scene.userData.element = element.querySelector( ".scene" );
         content.appendChild( element );
 
-        var camera = new THREE.PerspectiveCamera( 50, 1, 1, 200 );
+        var camera = new THREE.PerspectiveCamera( 50, 1, 0.1, 300 );
         camera.position.z = 100;
         scene.userData.camera = camera;
 
         var controls = new THREE.OrbitControls( scene.userData.camera, scene.userData.element );
         controls.minDistance = 1;
-        controls.maxDistance = 150;
+        controls.maxDistance = 200;
         controls.enablePan = false;
         controls.enableZoom = true;
         scene.userData.controls = controls;
 
         // add one random mesh to each scene
 
-        var creatureObj = new Creature(0, 0, 0, 10, particleShaderMaterial, rawShaderMaterial);
+        var creatureObj = new Creature(0, 0, 0, 10, particleShaderMaterial, rawShaderMaterial, 10);
 
         creatures.push(creatureObj);
-        //creatureObj.switchState();
-        //console.log(creatureObj);
-        scene.add( creatureObj.meshes(creatureObj.state()));
+        scene.add( creatureObj.creatureHolder());
 
         scene.add( new THREE.HemisphereLight( 0xaaaaaa, 0x444444 ) );
-
-        if(visualisation.ribbonMode){
-            worldHolder = new THREE.Object3D();
-
-            scene.add(worldHolder);
-
-            //creatureMesh.geometry.computeBoundingBox();
-            //CREATE EMITTERS
-            for (var i = 0; i < EMITTER_COUNT; i++) {
-                //todo
-                //creatureMesh.geometry.boundingBox.max.y
-                emitters[i] = ATUtil.randomVector3(50);
-            }
-
-            //CREATE RIBBONS
-            for (i = 0; i < RIBBON_COUNT; i++) {
-                //todo
-                //creatureMesh.geometry.boundingBox.max.y
-                var r = new Ribbon(50,EMITTER_COUNT);
-                r.init();
-                worldHolder.add(r.mesh);
-                ribbons.push(r);
-            }
-        }
-
 
 
         var light = new THREE.DirectionalLight( 0xffffff, 0.5 );
@@ -260,23 +217,6 @@ function updateSize() {
 }
 
 
-function animateRibbons() {
-    if (visualisation.ribbonMode) 
-    {
-        noiseTime += 0.001;
-        var i;
-        for (i = 0; i < RIBBON_COUNT; i++) 
-        {
-            ribbons[i].update();
-        }
-        if (worldHolder)
-        {
-            worldHolder.rotation.y += 0.001;
-            worldHolder.rotation.x += 0.001;
-        }
-    }
-}
-
 function animateCreatures() {
     var creatureIndex;
     for (creatureIndex = 0; creatureIndex < creatures.length; creatureIndex++) {
@@ -287,7 +227,6 @@ function animateCreatures() {
 function animate() {
     render();
     stats.update();
-    animateRibbons();
     animateCreatures();
     requestAnimationFrame( animate );
     TWEEN.update();
