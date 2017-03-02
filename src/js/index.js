@@ -19,7 +19,7 @@ var baseSize;
 
 var creatures = [];
 var noise = new SimplexNoise();
-
+var rawShaderMaterial;
 
 createTextures();
 init();
@@ -47,7 +47,7 @@ function initSketch(numberInstances) {
     var template = document.getElementById( "template" ).text;
     var i;
 
-    var rawShaderMaterial = new THREE.RawShaderMaterial( {
+    rawShaderMaterial = new THREE.RawShaderMaterial( {
         uniforms: {
             time: { value: 1.0 }
         },
@@ -60,7 +60,6 @@ function initSketch(numberInstances) {
     var particlesUniforms = {
         amplitude: { type: "f", value: 1.0 },
         texture:   { type: "t", value: textures.map },
-        time:      { type: "f", value: 0.1 },
         scale:     { type: "f", value: 1.0 }
     };
 
@@ -73,10 +72,9 @@ function initSketch(numberInstances) {
         transparent:    true
     });
     
-    for (i =  0; i < 1; i ++) {
+    for (i =  0; i < numberInstances; i ++) {
 
         var scene = new THREE.Scene();
-
         // make a list item
         var element = document.createElement( "div" );
         element.className = "list-item";
@@ -101,12 +99,10 @@ function initSketch(numberInstances) {
         // add one random mesh to each scene
 
         var creatureObj = new Creature(0, 0, 0, 10, particleShaderMaterial, rawShaderMaterial, 10);
-
+        //creatureObj.switchState();
         creatures.push(creatureObj);
-        scene.add( creatureObj.creatureHolder());
-
+        scene.add( creatureObj.creatureHolder);
         scene.add( new THREE.HemisphereLight( 0xaaaaaa, 0x444444 ) );
-
 
         var light = new THREE.DirectionalLight( 0xffffff, 0.5 );
         light.position.set( 1, 1, 1 );
@@ -114,14 +110,33 @@ function initSketch(numberInstances) {
 
         scenes.push( scene );
     }
-
-    renderer = new THREE.WebGLRenderer( { canvas: canvas, antialias: true } );
+    //ANIMATION
+    startParticlesAnimation(particleShaderMaterial.uniforms.amplitude);
+    
+    renderer = new THREE.WebGLRenderer( { canvas: canvas, antialias: false } );
     renderer.setClearColor( 0xffffff, 1 );
     renderer.setPixelRatio( window.devicePixelRatio );
 
     animate();
 }
 
+function startParticlesAnimation(amplitude) {   
+    var atween = new TWEEN.Tween(amplitude)
+            .to({value: 0.0}, 7500)
+            .delay(1000)
+            .easing(TWEEN.Easing.Back.InOut);
+    var btween = new TWEEN.Tween(amplitude)
+            .to({value: 1.0}, 7500)
+            .delay(1000)
+            .easing(TWEEN.Easing.Back.InOut);
+    atween.chain(btween);
+    btween.chain(atween);
+    atween.start();
+}
+ 
+function stopParticlesAnimation() {
+    TWEEN.removeAll();
+}
 
 function createTextures() {
     textures.map = new THREE.TextureLoader().load("img/spark1.png");
@@ -218,8 +233,10 @@ function updateSize() {
 
 
 function animateCreatures() {
+    rawShaderMaterial.uniforms.time.value = time * 0.002;
     var creatureIndex;
-    for (creatureIndex = 0; creatureIndex < creatures.length; creatureIndex++) {
+    var creaturesLength = creatures.length;
+    for (creatureIndex = 0; creatureIndex < creaturesLength; creatureIndex++) {
        creatures[creatureIndex].update(time); 
     }
 }
@@ -243,11 +260,7 @@ function render() {
     renderer.setClearColor( 0xe0e0e0 );
     renderer.setScissorTest( true );
 
-
     scenes.forEach( function( scene ) {
-
-
-        
         // get the element that is a place holder for where we want to
         // draw the scene
         var element = scene.userData.element;
@@ -258,11 +271,9 @@ function render() {
         // check if it's offscreen. If so skip it
         if ( rect.bottom < 0 || rect.top  > renderer.domElement.clientHeight ||
              rect.right  < 0 || rect.left > renderer.domElement.clientWidth ) {
-
             return;  // it's off screen
 
         }
-
         // set the viewport
         var width  = rect.right - rect.left;
         var height = rect.bottom - rect.top;
@@ -273,17 +284,7 @@ function render() {
         renderer.setScissor( left, bottom, width, height );
 
         var camera = scene.userData.camera;
-
-        //camera.aspect = width / height; // not changing in this example
-        //camera.updateProjectionMatrix();
-
-        //scene.userData.controls.update();
-
-
-
         renderer.render( scene, camera );
-
-
     } );
 
     if( currentFrame >= 1 && currentFrame <= frameLimit ) {

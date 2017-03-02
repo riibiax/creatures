@@ -1,10 +1,6 @@
-/*
-* Airtight Utilities 
-* v 0.1.1
-* @author felixturner / http://airtight.cc/
-*/
+'use strict';
 
-ATUtil = {
+var ATUtil = {
 	randomRange : function(min, max) {
 		return min + Math.random() * (max - min);
 	},

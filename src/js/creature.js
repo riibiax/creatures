@@ -1,3 +1,4 @@
+'use strict';
 const createMeshGeom = function(scale) {
 	var offset = new THREE.Vector2();
 	
@@ -271,14 +272,14 @@ const createTrianglesMesh = function(trianglesGeometry, trianglesIndexes, triang
     var bufferGeometrySize = trianglesGeometry.vertices.length;
 
 	var vertices = new Float32Array(bufferGeometrySize * 3 * 3);
-    var n, f;
+    var f, i;
     var currentStep = 0;
     var randomIndex;
-    for (n = 0, f = 0; f < bufferGeometrySize; n += 3) {
-        if(n % 9 == 0 ) {
-            vertices[ n     ] = verticesGeometry[ f ].x;
-            vertices[ n + 1 ] = verticesGeometry[ f ].y;
-            vertices[ n + 2 ] = verticesGeometry[ f ].z;
+    for (i = 0, f = 0; f < bufferGeometrySize; i += 3) {
+        if(i % 9 == 0 ) {
+            vertices[ i     ] = verticesGeometry[ f ].x;
+            vertices[ i + 1 ] = verticesGeometry[ f ].y;
+            vertices[ i + 2 ] = verticesGeometry[ f ].z;
             if(f >= trianglesIndexes[currentStep]) {
         		currentStep++;
         	}
@@ -286,17 +287,18 @@ const createTrianglesMesh = function(trianglesGeometry, trianglesIndexes, triang
         }
         else {
             randomIndex = ATUtil.randomInt(trianglesIndexes [currentStep-1], trianglesIndexes [currentStep] - 1);
-            vertices[ n     ] = verticesGeometry[ randomIndex ].x * (Math.random() * .3 + 1);
-            vertices[ n + 1 ] = verticesGeometry[ randomIndex ].y * (Math.random() * .3 + 1);
-            vertices[ n + 2 ] = verticesGeometry[ randomIndex ].z * (Math.random() * .3 + 1);
+            vertices[ i     ] = verticesGeometry[ randomIndex ].x * (Math.random() * .3 + 1);
+            vertices[ i + 1 ] = verticesGeometry[ randomIndex ].y * (Math.random() * .3 + 1);
+            vertices[ i + 2 ] = verticesGeometry[ randomIndex ].z * (Math.random() * .3 + 1);
         }
     }
+    var bufferGeometrySizeColor = bufferGeometrySize * 3 * 4;
     var colors = new Uint8Array( bufferGeometrySize * 3 * 4);
-    for (n = 0; n < bufferGeometrySize * 3 * 4; n += 4) {
-        colors[ n     ] = Math.random() * 255;
-        colors[ n + 1 ] = Math.random() * 255;
-        colors[ n + 2 ] = Math.random() * 255;
-        colors[ n + 3 ] = Math.random() * 255;
+    for (i = 0; i < bufferGeometrySizeColor; i += 4) {
+        colors[ i     ] = Math.random() * 255;
+        colors[ i + 1 ] = Math.random() * 255;
+        colors[ i + 2 ] = Math.random() * 255;
+        colors[ i + 3 ] = Math.random() * 255;
     }
 
 	bufferGeometry.addAttribute( 'position', new THREE.BufferAttribute(vertices, 3));
@@ -305,53 +307,27 @@ const createTrianglesMesh = function(trianglesGeometry, trianglesIndexes, triang
     return creatureRawMesh;
 }
 
-const startParticlesAnimation = function(particleMesh) {	
-	var atween = new TWEEN.Tween(particleMesh.material.uniforms.amplitude)
-            .to({value: 0.0}, 3000)
-            .delay(1000)
-            .easing(TWEEN.Easing.Back.InOut);
-    var btween = new TWEEN.Tween(particleMesh.material.uniforms.amplitude)
-            .to({value: 1.0}, 3000)
-            .delay(1000)
-            .easing(TWEEN.Easing.Back.InOut);
-    atween.chain(btween);
-    btween.chain(atween);
-    atween.start();
-}
-
-const stopParticlesAnimation = function() {
-	TWEEN.removeAll();
-}
 
 function Creature(posX, posY, posZ, scale, particlesMaterial, trianglesMaterial, ribbonsCount) {
-	this._creatureHolder = new THREE.Object3D();
-    this._position = new THREE.Vector3();
-	this._position.x =  posX || 0;
-	this._position.y =  posY || 0;
-	this._position.z =  posZ || 0;
+	this.creatureHolder = new THREE.Group();
+    this.position = new THREE.Vector3();
+    this.position.set(posX || 0, posY || 0, posZ || 0);
 
-	this._state = 0;
+	this.state = 0;
     this._ribbons = [];
-
 	var meshGeom = createMeshGeom.call(this, scale);
+	this.creatureHolder.add( createParticlesMesh.call(this, meshGeom.geometry, particlesMaterial, scale));
 
-	this._creatureHolder.add( createParticlesMesh.call(this, meshGeom.geometry, particlesMaterial, scale) );
-	startParticlesAnimation.call(this, this._creatureHolder.children[0]);
-
-	this._creatureHolder.add( createTrianglesMesh.call(this, meshGeom.geometry, meshGeom.indexes, trianglesMaterial) );
-    this._creatureHolder.children[1].visible = false;
+	this.creatureHolder.add( createTrianglesMesh.call(this, meshGeom.geometry, meshGeom.indexes, trianglesMaterial) );
+    this.creatureHolder.children[1].visible = false;
     meshGeom.geometry.computeBoundingSphere();
     var bounds = meshGeom.geometry.boundingSphere.radius;
     var ribbon;
-    //todo
-    var meshMaterial = new THREE.MeshBasicMaterial( {
-        side: THREE.DoubleSide,
-        vertexColors: THREE.FaceColors
-    } );
+    var i;
     for (i = 0; i < ribbonsCount; i++) {
-        ribbon = new Ribbon(bounds);
+        ribbon = new Ribbon(bounds, scale);
         this._ribbons.push(ribbon);
-        this._creatureHolder.add(new THREE.Mesh( ribbon.meshGeom, meshMaterial ));
+        this.creatureHolder.add(new THREE.Mesh( ribbon.meshGeom, trianglesMaterial ));
     }
 }    
 
@@ -360,34 +336,24 @@ Creature.prototype =  {
 	constructor: Creature,
 
     update: function(time) {
-		this._creatureHolder.children[this._state].material.uniforms.time.value = time * 0.005;
         var i;
-        for (i = 0; i < this._ribbons.length; i++) {
+        var ribbonLength = this._ribbons.length;
+        for (i = 0; i < ribbonLength; i++) {
             this._ribbons[i].update(time);
         }
-        this._creatureHolder.rotation.y = time * 0.0005;
+        this.creatureHolder.rotation.y = time * 0.0005;
 	},
 
 	switchState: function() {
-	   	if (this._state == 0) {
-			this._state = 1;
-            this._creatureHolder.children[0].visible = false;
-            this._creatureHolder.children[1].visible = true;
-			stopParticlesAnimation.call(this);	
+	   	if (this.state == 0) {
+			this.state = 1;
+            this.creatureHolder.children[0].visible = false;
+            this.creatureHolder.children[1].visible = true;
 		}
 		else {
-			this._state = 0;
-            this._creatureHolder.children[0].visible = true;
-            this._creatureHolder.children[1].visible = false;
-			startParticlesAnimation.call(this, this._creatureHolder.children[this._state]);
+			this.state = 0;
+            this.creatureHolder.children[0].visible = true;
+            this.creatureHolder.children[1].visible = false;
 		}
-	},
-
-    state: function() {
-        return this._state;
-    },
-
-    creatureHolder: function() {
-        return this._creatureHolder;
-    }
+	}
 };
