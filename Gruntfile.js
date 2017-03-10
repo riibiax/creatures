@@ -35,7 +35,7 @@ module.exports = function(grunt) {
             options: {
                 livereload: true
             }
-        },
+        }
     },
     copy: {
       index: {
@@ -99,7 +99,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-browserify');
   grunt.loadNpmTasks('grunt-nodemon');
 
-   grunt.registerTask('default', '', function() {
+  grunt.registerTask('default', '', function() {
     var taskList = [
         'clean',
         'copy',

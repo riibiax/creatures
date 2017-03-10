@@ -1,5 +1,5 @@
 'use strict';
-const createMeshGeom = function(scale) {
+const createMeshGeom = function() {
 	var offset = new THREE.Vector2();
 	
 	var creatureGeometry = new THREE.Geometry();
@@ -42,26 +42,26 @@ const createMeshGeom = function(scale) {
 
     //creatureGeometry.computeFaceNormals();
     //creatureGeometry.computeVertexNormals();
-    creatureGeometry.scale(scale, scale, scale);
+    creatureGeometry.scale(this.scale, this.scale, this.scale);
 	
 	return { geometry: creatureGeometry, indexes: creatureIndexes};
 }
 
 const creatingNose = function(offset) {
-    var coneUpDown = new THREE.ConeGeometry(1., 1., 3, 15);
+    var coneUpDown = new THREE.ConeGeometry(1., 1., 14, 5);
     coneUpDown.computeBoundingBox();
     coneUpDown.applyMatrix(new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(0, 0, 1), Math.PI));
     coneUpDown.applyMatrix(new THREE.Matrix4().makeTranslation(0, -coneUpDown.boundingBox.max.y * .5, 0));                
-    var coneDownUp = new THREE.ConeGeometry(1., 1., 3, 15);
+    var coneDownUp = new THREE.ConeGeometry(1., 1., 14, 5);
     coneDownUp.computeBoundingBox();
     coneDownUp.applyMatrix(new THREE.Matrix4().makeTranslation(0, coneDownUp.boundingBox.max.y, 0)); 
-    var box = new THREE.BoxGeometry(.75, .75, .75, 5, 5, 5);
+    var box = new THREE.BoxGeometry(.75, .75, .75, 3, 3, 3);
     box.computeBoundingBox();
     box.applyMatrix(new THREE.Matrix4().makeTranslation(0, -box.boundingBox.max.y * .75, 0));
-    var sphere = new THREE.SphereGeometry(.5, 12, 12);
+    var sphere = new THREE.SphereGeometry(.5, 10, 7);
     sphere.computeBoundingBox();
     sphere.applyMatrix(new THREE.Matrix4().makeTranslation(0, sphere.boundingBox.max.y * .5, 0));
-    var cylinder =  new THREE.CylinderGeometry(.5, .5, 1.25, 12, 10);
+    var cylinder =  new THREE.CylinderGeometry(.5, .5, 1.25, 12, 7);
     var noseGeometries = [
         coneUpDown,
         coneDownUp,
@@ -70,28 +70,27 @@ const creatingNose = function(offset) {
         cylinder
     ];
     var index = ATUtil.randomInt(0, noseGeometries.length-1);
-    var noseGeometry = noseGeometries [index | 0];
-    return noseGeometry;
+    return noseGeometries [index | 0];
 }
 
 const creatingEyes = function(offset) {
-    var coneUpDown = new THREE.ConeGeometry( .5, .5, 3, 15);
+    var coneUpDown = new THREE.ConeGeometry( .5, .5, 7, 4);
     coneUpDown.applyMatrix(new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(0, 0, 1), Math.PI));
-    var coneDownUp = new THREE.ConeGeometry( .5, .5, 3, 15);
-    var box = new THREE.BoxGeometry(.5, .5, .5, 5, 5, 5);
-    var sphere = new THREE.SphereGeometry( .25, 12, 12);
-    var cylinderVertical =  new THREE.CylinderGeometry( .25, .25, .5, 12, 10);
-    var cylinderHorizontal = new THREE.CylinderGeometry( .25, .25, .5, 12, 10);
+    var coneDownUp = new THREE.ConeGeometry( .5, .5, 7, 4);
+    var box = new THREE.BoxGeometry(.5, .5, .5, 2, 2, 2);
+    var sphere = new THREE.SphereGeometry( .25, 7, 4);
+    var cylinderVertical =  new THREE.CylinderGeometry( .25, .25, .5, 7, 5);
+    var cylinderHorizontal = new THREE.CylinderGeometry( .25, .25, .5, 7, 5);
     cylinderHorizontal.applyMatrix(new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(0, 0, 1), Math.PI / 2.));
-    var torus = new THREE.TorusGeometry( .25, .1, 16, 20);
+    var torus = new THREE.TorusGeometry( .25, .1, 3, 12);
     torus.computeBoundingBox();
     torus.applyMatrix(new THREE.Matrix4().makeTranslation(.0, -torus.boundingBox.max.y * .25, 0));
-    var torusUp = new THREE.TorusGeometry( .25, .1, 16, 20, Math.PI );
+    var torusUp = new THREE.TorusGeometry( .25, .1, 3, 6, Math.PI );
     torusUp.computeBoundingBox();
     torusUp.applyMatrix(new THREE.Matrix4().makeTranslation(.0, -torusUp.boundingBox.max.y * .5, 0));
-    var torusDown = new THREE.TorusGeometry( .25, .1, 16, 20, -Math.PI );
+    var torusDown = new THREE.TorusGeometry( .25, .1, 3, 6, -Math.PI );
     torusDown.applyMatrix(new THREE.Matrix4().makeTranslation(.0, torusUp.boundingBox.max.y , 0));
-    var torusHorizontal = new THREE.TorusGeometry( .25, .1, 16, 20);
+    var torusHorizontal = new THREE.TorusGeometry( .25, .1, 3, 12);
     torusHorizontal.applyMatrix(new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(1, 0, 0), Math.PI/2));  
 
     var eyesGeometries = [
@@ -120,23 +119,23 @@ const creatingEyes = function(offset) {
 }
 
 const creatingEars = function(offset) {
-    var rotatedConeUp = new THREE.ConeGeometry(.25, 1.5, 4, 15);
+    var rotatedConeUp = new THREE.ConeGeometry(.25, 1.5, 7, 7);
     rotatedConeUp.applyMatrix(new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(0, 0, 1), -Math.PI / 8.));
 
-    var rotatedConeDown =  new THREE.ConeGeometry(.25, 2., 4, 15);
+    var rotatedConeDown =  new THREE.ConeGeometry(.25, 2., 7, 7);
     rotatedConeDown.applyMatrix(new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(0, 0, 1), -Math.PI / 4. * 3.));
     rotatedConeDown.computeBoundingBox();
     rotatedConeDown.applyMatrix(new THREE.Matrix4().makeTranslation(0, -rotatedConeDown.boundingBox.max.y, 0));
 
-    var box = new THREE.BoxGeometry(.25, .25, .25, 5, 5, 5);
+    var box = new THREE.BoxGeometry(.25, .25, .25, 2, 2, 2);
     box.applyMatrix(new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(0, 0, 1), Math.PI / 4.)); 
 
-    var sphere = new THREE.SphereGeometry(.25, 12, 12);
+    var sphere = new THREE.SphereGeometry(.25, 7, 5);
 
-    var cylinderUp = new THREE.CylinderGeometry(.125, .125, .75, 12, 10);
+    var cylinderUp = new THREE.CylinderGeometry(.125, .125, .75, 7, 4);
     cylinderUp.applyMatrix(new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(0, 0, 1), -Math.PI / 8.));
 
-    var cylinderDown = new THREE.CylinderGeometry(.125, .125, 1., 12, 10);
+    var cylinderDown = new THREE.CylinderGeometry(.125, .125, 1., 7, 4);
     cylinderDown.applyMatrix(new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(0, 0, 1), -Math.PI / 4. * 3.));
     cylinderDown.computeBoundingBox();
     cylinderDown.applyMatrix(new THREE.Matrix4().makeTranslation(0, -cylinderDown.boundingBox.max.y, 0));
@@ -176,14 +175,14 @@ const creatingEars = function(offset) {
 }
 
 const creatingMouth = function(offset) {
-    var coneUpDown = new THREE.ConeGeometry(2., 1., 25, 10);
+    var coneUpDown = new THREE.ConeGeometry(2., 1., 28, 10);
     coneUpDown.applyMatrix(new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(0, 0, 1), Math.PI));              
-    var coneDownUp = new THREE.ConeGeometry(2.25, 1.25, 25, 10);
-    var box = new THREE.BoxGeometry(2.5, 1., 2.5, 10, 10, 10);
+    var coneDownUp = new THREE.ConeGeometry(2.25, 1.25, 28, 10);
+    var box = new THREE.BoxGeometry(2.5, 1., 2.5, 8, 6, 8);
     box.applyMatrix(new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(0, 1, 0), Math.PI/4));
-    var sphere = new THREE.SphereGeometry(1.25, 12, 12);
+    var sphere = new THREE.SphereGeometry(1.25, 14, 14);
 
-    var circle = new THREE.CircleGeometry( 1.5, 32 );
+    var circle = new THREE.CircleGeometry( 1.5, 30 );
     circle.applyMatrix(new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(0, 1, 0), Math.PI));
     var halfSphere = new THREE.SphereGeometry(1.5, 12, 12, 0, Math.PI);
     halfSphere.merge(circle);
@@ -191,12 +190,12 @@ const creatingMouth = function(offset) {
     halfSphere.computeFaceNormals();
     halfSphere.computeVertexNormals();
 
-    var cylinder =  new THREE.CylinderGeometry(.25, .25, 3., 12, 10);
+    var cylinder =  new THREE.CylinderGeometry(.25, .25, 3., 10, 16);
     cylinder.applyMatrix(new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(0, 0, 1), Math.PI / 2.));
 
-    var torusVertical = new THREE.TorusGeometry( 1., .15, 16, 20);
+    var torusVertical = new THREE.TorusGeometry( 1., .15, 8, 26);
 
-    var torusHorizontal = new THREE.TorusGeometry( 1.5, .25, 16, 20);
+    var torusHorizontal = new THREE.TorusGeometry( 1.5, .25, 8, 26);
     torusHorizontal.applyMatrix(new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(1, 0, 0), Math.PI/2));  
 
     var mouthGeometries = [
@@ -239,7 +238,7 @@ const creatingMouth = function(offset) {
     return mouthGeometry;
 }
 
-const createParticlesMesh = function(particlesGeometry, particlesMaterial, scale) {
+const createParticlesMesh = function(particlesGeometry, particlesMaterial) {
 	var bufferGeometry = new THREE.BufferGeometry()
     var bufferGeometrySize = particlesGeometry.vertices.length;
     var geometryVertices = particlesGeometry.vertices;
@@ -262,7 +261,7 @@ const createParticlesMesh = function(particlesGeometry, particlesMaterial, scale
     bufferGeometry.addAttribute( 'customPosition', new THREE.BufferAttribute( customPosition, 3).setDynamic(true));
     var creatureParticleMesh = new THREE.Points( bufferGeometry, particlesMaterial );
     creatureParticleMesh.geometry.attributes.customPosition.needsUpdate = true;
-    creatureParticleMesh.material.uniforms.scale.value = scale;
+    creatureParticleMesh.material.uniforms.scale.value = this.scale;
     return creatureParticleMesh;
 }
 
@@ -312,11 +311,11 @@ function Creature(posX, posY, posZ, scale, particlesMaterial, trianglesMaterial,
 	this.creatureHolder = new THREE.Group();
     this.position = new THREE.Vector3();
     this.position.set(posX || 0, posY || 0, posZ || 0);
-
+    this.scale = scale;
 	this.state = 0;
     this._ribbons = [];
-	var meshGeom = createMeshGeom.call(this, scale);
-	this.creatureHolder.add( createParticlesMesh.call(this, meshGeom.geometry, particlesMaterial, scale));
+	var meshGeom = createMeshGeom.call(this);
+	this.creatureHolder.add( createParticlesMesh.call(this, meshGeom.geometry, particlesMaterial));
 
 	this.creatureHolder.add( createTrianglesMesh.call(this, meshGeom.geometry, meshGeom.indexes, trianglesMaterial) );
     this.creatureHolder.children[1].visible = false;
