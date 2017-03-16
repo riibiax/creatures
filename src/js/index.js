@@ -89,24 +89,24 @@ function initSketch(numberInstances) {
         camera.position.z = 100;
         scene.userData.camera = camera;
 
-        var controls = new THREE.OrbitControls( scene.userData.camera, scene.userData.element );
-        controls.minDistance = 1;
-        controls.maxDistance = 200;
-        controls.enablePan = false;
-        controls.enableZoom = true;
-        scene.userData.controls = controls;
+        //var controls = new THREE.OrbitControls( scene.userData.camera, scene.userData.element );
+        //controls.minDistance = 1;
+        //controls.maxDistance = 200;
+        //controls.enablePan = false;
+        //controls.enableZoom = true;
+        //scene.userData.controls = controls;
 
         // add one random mesh to each scene
 
         var creatureObj = new Creature(0, 0, 0, 10, particleShaderMaterial, rawShaderMaterial, 10);
-        creatureObj.switchState();
+        //creatureObj.switchState();
         creatures.push(creatureObj);
         scene.add( creatureObj.creatureHolder);
         //scene.add( new THREE.HemisphereLight( 0xaaaaaa, 0x444444 ) );
 
-        var light = new THREE.DirectionalLight( 0xffffff, 0.5 );
-        light.position.set( 1, 1, 1 );
-        scene.add( light );
+        //var light = new THREE.DirectionalLight( 0xffffff, 0.5 );
+        //light.position.set( 1, 1, 1 );
+        //scene.add( light );
 
         scenes.push( scene );
     }
