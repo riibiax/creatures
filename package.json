@@ -14,9 +14,12 @@
   "author": "earove",
   "license": "MIT",
   "devDependencies": {
+  },
+  "dependencies": {
     "child_process": "^1.0.2",
-    "express": "^4.15.2",
-    "firebase": "^3.6.10",
+    "express": "4.15.2",
+    "firebase": "3.7.2",
+    "socket.io": "1.7.3",
     "grunt": "^1.0.1",
     "grunt-browserify": "^5.0.0",
     "grunt-concurrent": "^2.3.1",
@@ -26,16 +29,10 @@
     "grunt-contrib-watch": "^1.0.0",
     "grunt-nodemon": "^0.4.2",
     "mocha": "^3.2.0",
-    "socket.io": "^1.7.3",
     "socket.io-client": "^1.7.3",
     "three": "^0.84.0",
     "three-orbitcontrols": "^1.1.2",
     "tween.js": "^16.6.0",
     "twit": "^2.2.5"
-  },
-  "dependencies": {
-    "express": "4.15.2",
-    "firebase": "3.7.2",
-    "socket.io": "1.7.3"
   }
 }
