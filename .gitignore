@@ -1,7 +1,8 @@
-.gitignore
+# MacOS noise
+.DS_Store
 
 dist
 node_modules
 tmp
-
+config*
 output*

@@ -43,6 +43,7 @@ const createMeshGeom = function() {
     //creatureGeometry.computeFaceNormals();
     //creatureGeometry.computeVertexNormals();
     creatureGeometry.scale(this.scale, this.scale, this.scale);
+    creatureGeometry.translate(this.position.x, this.position.y, this.position.z);
 	
 	return { geometry: creatureGeometry, indexes: creatureIndexes};
 }

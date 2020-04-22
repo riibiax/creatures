@@ -13,8 +13,7 @@
   },
   "author": "earove",
   "license": "MIT",
-  "devDependencies": {
-  },
+  "devDependencies": {},
   "dependencies": {
     "child_process": "^1.0.2",
     "express": "4.15.2",
